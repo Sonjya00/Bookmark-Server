@@ -20,11 +20,15 @@ import http.server
 import requests
 from urllib.parse import unquote, parse_qs
 import os
+import threading
+from socketserver import ThreadingMixIn
 
 memory = {}
 
 form = '''<!DOCTYPE html>
 <title>Bookmark Server</title>
+<h1>Bookmark Server</h1>
+<p>Insert an url to verify it.</p>
 <form method="POST">
     <label>Long URI:
         <input name="longuri">
@@ -120,10 +124,13 @@ class Shortener(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-type', 'text/plain; charset=utf-8')
             self.end_headers()
             self.wfile.write("Error 404: URI check not successful")
+
+class ThreadHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    "This is an HTTPServer that supports thread-based concurrency."
             
 if __name__ == '__main__':
     # importing port number
     port = int(os.environ.get('PORT', 8000))
     server_address = ('', port)
-    httpd = http.server.HTTPServer(server_address, Shortener)
+    httpd = ThreadHTTPServer(server_address, Shortener)
     httpd.serve_forever()
